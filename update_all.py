@@ -1100,14 +1100,17 @@ def get_next_trade_number(db_id, token):
         return (num or 0) + 1
     return 1
 def match_trade_event(order_id, symbol, strategy, trade_events):
-    """trade_events.json에서 매칭되는 이벤트 찾기"""
+    """trade_events.json에서 매칭되는 이벤트 찾기
+    주의: '진입' 이벤트는 청산이유가 아니므로 제외해야 함"""
     # orderId로 직접 매칭
     for ev in trade_events:
         if ev.get("orderId") == order_id:
             return ev
-    # symbol + strategy로 폴백 매칭
-    for ev in trade_events:
-        if ev.get("symbol") == symbol and ev.get("strategy") == strategy:
+    # symbol + strategy로 폴백 매칭 (진입 이벤트 제외 — 청산이유만 반환)
+    for ev in reversed(trade_events):
+        if (ev.get("symbol") == symbol
+                and ev.get("strategy") == strategy
+                and ev.get("reason") != "진입"):
             return ev
     return None
 def estimate_close_reason(pnl_pct, time_stop_hours=None, hold_hours=0):

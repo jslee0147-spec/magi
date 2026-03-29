@@ -26,7 +26,7 @@ ENTRY_PCT = 0.05
 TIME_STOP_HOURS = 36
 FUNDING_THRESHOLD = 0.0005  # ±0.05% (기존 0.08%에서 완화 — 성단 분석)
 OI_CHANGE_THRESHOLD = 10    # 24h OI 변화율 > +10% (기존 15%에서 완화 — 성단 분석)
-COOLDOWN_MINUTES = 30  # 청산 후 동일 종목 재진입 제한 시간(분)
+COOLDOWN_MINUTES = 120  # 청산 후 동일 종목 재진입 제한 시간(분) — 2시간 (소니 승인)
 
 logger = create_logger("engine_release", "release.log")
 
