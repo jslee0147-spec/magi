@@ -204,7 +204,7 @@ def scan_and_trade(config):
             tp1, tp2, sl = calc_tp_sl(last_price, direction, TP1_PCT, TP2_PCT, SL_PCT)
             # 시장가 주문 (SL만 설정, TP는 엔진이 관리)
             result = place_market_order(symbol, direction, qty, api_key, api_secret,
-                                        take_profit=tp1, stop_loss=sl)
+                                        take_profit=tp2, stop_loss=sl)
             if result:
                 side_kr = "롱" if direction == "Buy" else "숏"
                 logger.info(f"🌊 진입: {symbol} {side_kr} qty={qty} @ ~{last_price}")

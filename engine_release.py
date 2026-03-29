@@ -213,7 +213,7 @@ def scan_and_trade(config):
             set_leverage(symbol, LEVERAGE, api_key, api_secret)
             tp1, tp2, sl = calc_tp_sl(last_price, direction, TP1_PCT, TP2_PCT, SL_PCT)
             result = place_market_order(symbol, direction, qty, api_key, api_secret,
-                                        take_profit=tp1, stop_loss=sl)
+                                        take_profit=tp2, stop_loss=sl)
             if result:
                 side_kr = "롱" if direction == "Buy" else "숏"
                 logger.info(f"👁️ 진입: {symbol} {side_kr} qty={qty} @ ~{last_price}")
