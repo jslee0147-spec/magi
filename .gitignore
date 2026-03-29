@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 환경 변수 / 민감 파일
+.env
+config.json
+
+# JSON 데이터 파일 (런타임 생성)
+active_coins.json
+active_coins.backup.json
+dashboard_blocks.json
+dd_protection_*.json
+heartbeat_*.json
+last_equity_*.json
+market_snapshot.json
+notified_closures_*.json
+position_entries.json
+synced_orders.json
+trade_events.json
+
+# 로그
+logs/
+*.log
+
+# 백업 파일
+*.bak
+*.bak_*
+
+# macOS
+.DS_Store
