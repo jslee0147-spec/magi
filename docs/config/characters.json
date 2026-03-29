@@ -1,0 +1,122 @@
+{
+  "version": "1.0",
+  "spriteStyle": "default",
+  "spriteSize": { "width": 64, "height": 64 },
+  "office": {
+    "width": 1280,
+    "height": 720,
+    "background": "#1a1a2e"
+  },
+  "members": [
+    {
+      "id": "junsu",
+      "name": "준수",
+      "role": "총괄",
+      "position": { "x": 640, "y": 360 },
+      "desk": "large",
+      "animationProfile": "leader",
+      "color": "#FFD700",
+      "feature": "모니터 2대, 헤드셋"
+    },
+    {
+      "id": "byeol",
+      "name": "별이",
+      "role": "분석/보고",
+      "position": { "x": 480, "y": 340 },
+      "desk": "normal",
+      "animationProfile": "analyst",
+      "color": "#7B68EE",
+      "feature": "안경, 돋보기"
+    },
+    {
+      "id": "mitsuri",
+      "name": "미츠리",
+      "role": "코딩",
+      "position": { "x": 800, "y": 340 },
+      "desk": "normal",
+      "animationProfile": "developer",
+      "color": "#FF69B4",
+      "feature": "핑크+초록 투톤 머리"
+    },
+    {
+      "id": "sony",
+      "name": "소니",
+      "role": "설계/리뷰",
+      "position": { "x": 560, "y": 500 },
+      "desk": "normal",
+      "animationProfile": "designer",
+      "color": "#4169E1",
+      "feature": "펜, 태블릿"
+    },
+    {
+      "id": "asuka",
+      "name": "아스카",
+      "role": "검토",
+      "position": { "x": 700, "y": 500 },
+      "desk": "normal",
+      "animationProfile": "reviewer",
+      "color": "#FF6347",
+      "feature": "날카로운 눈, 코드리뷰"
+    },
+    {
+      "id": "kai",
+      "name": "카이",
+      "role": "성단-진입/청산",
+      "position": { "x": 900, "y": 540 },
+      "desk": "normal",
+      "animationProfile": "trader",
+      "color": "#32CD32",
+      "feature": "차트 모니터링"
+    },
+    {
+      "id": "jet",
+      "name": "제트",
+      "role": "성단-리스크",
+      "position": { "x": 1040, "y": 540 },
+      "desk": "normal",
+      "animationProfile": "risk",
+      "color": "#FF8C00",
+      "feature": "경고등 체크"
+    },
+    {
+      "id": "boomerang",
+      "name": "부메랑",
+      "role": "성단-API/네트워크",
+      "position": { "x": 200, "y": 180 },
+      "desk": "normal",
+      "animationProfile": "engineer",
+      "color": "#00CED1",
+      "feature": "서버 랙 앞"
+    },
+    {
+      "id": "release",
+      "name": "릴리스",
+      "role": "성단-데이터 무결성",
+      "position": { "x": 1080, "y": 180 },
+      "desk": "normal",
+      "animationProfile": "data",
+      "color": "#9370DB",
+      "feature": "데이터 테이블"
+    },
+    {
+      "id": "shinji",
+      "name": "신지",
+      "role": "일일점검",
+      "position": { "x": 240, "y": 360 },
+      "desk": "normal",
+      "animationProfile": "checker",
+      "color": "#87CEEB",
+      "feature": "체크리스트"
+    },
+    {
+      "id": "rei",
+      "name": "레이",
+      "role": "시스템검토",
+      "position": { "x": 1040, "y": 360 },
+      "desk": "normal",
+      "animationProfile": "system",
+      "color": "#E0E0E0",
+      "feature": "터미널 화면"
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏢 MAGI Pixel Office</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- 상단 헤더 -->
+  <header id="header">
+    <h1>🏢 MAGI Pixel Office</h1>
+    <div id="connection-status">
+      <span id="status-dot"></span>
+      <span id="status-text">연결 중...</span>
+    </div>
+  </header>
+
+  <!-- 오프라인/연결 끊김 배너 -->
+  <div id="error-banner" class="hidden">
+    <span id="error-message">연결이 끊겼습니다. 마지막 상태를 표시합니다.</span>
+  </div>
+
+  <!-- 사무실 메인 영역 -->
+  <main id="office-container">
+    <div id="office">
+      <!-- 가구 장식 -->
+      <div class="furniture" id="server-rack" style="left: 560px; top: 120px;">🖥️ 서버랙</div>
+      <div class="furniture" id="coffee-machine" style="left: 440px; top: 600px;">☕ 커피머신</div>
+      <div class="furniture" id="whiteboard" style="left: 700px; top: 600px;">📋 화이트보드</div>
+      <div class="furniture" id="magi-logo" style="left: 580px; top: 40px;">⚡ MAGI</div>
+
+      <!-- 캐릭터들은 app.js에서 동적으로 생성 -->
+    </div>
+  </main>
+
+  <!-- 모바일: 캐릭터 상세 모달 -->
+  <div id="modal-overlay" class="hidden">
+    <div id="modal">
+      <button id="modal-close">&times;</button>
+      <div id="modal-avatar"></div>
+      <h2 id="modal-name"></h2>
+      <p id="modal-role"></p>
+      <div id="modal-status"></div>
+      <p id="modal-task"></p>
+      <p id="modal-updated"></p>
+    </div>
+  </div>
+
+  <!-- Firebase SDK (CDN) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+  <!-- 앱 스크립트 -->
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
