@@ -7,11 +7,15 @@
   // ===== 상수 =====
   const AWAY_TIMEOUT_MS = 30 * 60 * 1000; // 30분 무응답 → away
   const DB_PATH = 'team_magi';
+  const EVENTS_PATH = 'team_magi_events';
+  const MAX_EVENTS = 50;
 
   // ===== 상태 =====
   let characters = [];
   let firebaseReady = false;
   let dbRef = null;
+  let eventsRef = null;
+  let eventCount = 0;
   let isMobile = window.innerWidth <= 767;
 
   // ===== 초기화 =====
@@ -26,6 +30,10 @@
       firebase.initializeApp(firebaseConfig);
       const db = firebase.database();
       dbRef = db.ref(DB_PATH);
+      eventsRef = db.ref(EVENTS_PATH);
+
+      // 익명 인증 (Phase 2: auth != null 보안 규칙 대응)
+      await firebase.auth().signInAnonymously();
 
       // 연결 상태 모니터링
       setupConnectionMonitor(db);
@@ -36,6 +44,9 @@
 
       // Firebase 리스너
       setupFirebaseListeners();
+
+      // 이벤트 타임라인 리스너
+      setupEventListeners();
 
       // 모바일 배터리 절약: visibilitychange
       setupVisibilityHandler();
@@ -180,6 +191,54 @@
     });
   }
 
+  // ===== 이벤트 타임라인 =====
+  function setupEventListeners() {
+    eventsRef.limitToLast(MAX_EVENTS).on('child_added', function (snap) {
+      var event = snap.val();
+      if (!event) return;
+      addEventToTimeline(event);
+    });
+  }
+
+  function addEventToTimeline(event) {
+    var list = document.getElementById('timeline-list');
+    var empty = document.getElementById('timeline-empty');
+    if (empty) empty.remove();
+
+    // 시간 포맷: [HH:MM]
+    var date = new Date(event.timestamp);
+    var hours = String(date.getHours()).padStart(2, '0');
+    var minutes = String(date.getMinutes()).padStart(2, '0');
+    var timeStr = '[' + hours + ':' + minutes + ']';
+
+    // 캐릭터 이름과 색상 찾기
+    var char = characters.find(function (c) { return c.id === event.who; });
+    var name = char ? char.name : event.who;
+    var color = char ? char.color : '#aaa';
+
+    // 이벤트 DOM 생성
+    var el = document.createElement('div');
+    el.className = 'timeline-event';
+    el.innerHTML =
+      '<span class="event-time">' + timeStr + '</span>' +
+      '<span class="event-name" style="color: ' + color + '">' + name + '</span>' +
+      '<span class="event-dash">—</span>' +
+      '<span class="event-action">' + (event.action || '') + '</span>';
+
+    // 최신 이벤트를 위에 삽입
+    list.insertBefore(el, list.firstChild);
+
+    // 최대 50개 유지
+    eventCount++;
+    if (eventCount > MAX_EVENTS) {
+      list.removeChild(list.lastChild);
+      eventCount = MAX_EVENTS;
+    }
+
+    // 건수 업데이트
+    document.getElementById('timeline-count').textContent = eventCount + '건';
+  }
+
   // ===== 캐릭터 상태 업데이트 =====
   function updateCharacter(id, state) {
     var now = Date.now();
@@ -304,9 +363,11 @@
       if (document.hidden) {
         // 백그라운드: Firebase 리스너 해제
         if (dbRef) dbRef.off();
+        if (eventsRef) eventsRef.off();
       } else {
         // 포그라운드: 리스너 재연결
         if (dbRef) setupFirebaseListeners();
+        if (eventsRef) setupEventListeners();
       }
     });
   }

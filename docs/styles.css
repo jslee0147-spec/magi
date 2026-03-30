@@ -77,7 +77,6 @@ body {
   justify-content: center;
   align-items: center;
   padding: 16px;
-  min-height: calc(100vh - 60px);
 }
 
 #office {
@@ -321,6 +320,104 @@ body {
   animation: pulse-idle 2s ease-in-out infinite;
 }
 
+/* ===== 이벤트 타임라인 ===== */
+#timeline-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 16px 16px;
+}
+
+#timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: #12122a;
+  border: 1px solid #2a2a4a;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #aaa;
+}
+
+#timeline-count {
+  font-size: 11px;
+  color: #666;
+  font-weight: 400;
+}
+
+#timeline-list {
+  background: #151530;
+  border: 1px solid #2a2a4a;
+  border-radius: 0 0 8px 8px;
+  height: 180px;
+  overflow-y: auto;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#timeline-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+#timeline-list::-webkit-scrollbar-track {
+  background: #1a1a2e;
+}
+
+#timeline-list::-webkit-scrollbar-thumb {
+  background: #3a3a5a;
+  border-radius: 3px;
+}
+
+#timeline-empty {
+  text-align: center;
+  color: #555;
+  font-size: 12px;
+  padding: 60px 0;
+}
+
+.timeline-event {
+  padding: 4px 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #bbb;
+  animation: event-fade-in 0.4s ease-out;
+}
+
+.timeline-event:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.timeline-event .event-time {
+  color: #666;
+  margin-right: 8px;
+  font-family: monospace;
+  font-size: 11px;
+}
+
+.timeline-event .event-name {
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+.timeline-event .event-dash {
+  color: #555;
+  margin: 0 4px;
+}
+
+@keyframes event-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* ===== 모달 (모바일 상세) ===== */
 #modal-overlay {
   position: fixed;
@@ -490,5 +587,13 @@ body {
     border-radius: 50%;
     display: inline-block;
     margin-right: 4px;
+  }
+
+  #timeline-container {
+    padding: 0 8px 8px;
+  }
+
+  #timeline-list {
+    height: 140px;
   }
 }

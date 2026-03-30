@@ -37,6 +37,18 @@
     </div>
   </main>
 
+  <!-- 이벤트 타임라인 -->
+  <section id="timeline-container">
+    <div id="timeline-header">
+      <span>📋 이벤트 타임라인</span>
+      <span id="timeline-count">0건</span>
+    </div>
+    <div id="timeline-list">
+      <!-- 이벤트는 app.js에서 동적 생성 -->
+      <div id="timeline-empty">아직 이벤트가 없습니다</div>
+    </div>
+  </section>
+
   <!-- 모바일: 캐릭터 상세 모달 -->
   <div id="modal-overlay" class="hidden">
     <div id="modal">
@@ -52,6 +64,7 @@
 
   <!-- Firebase SDK (CDN) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
   <!-- 앱 스크립트 -->
