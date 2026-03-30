@@ -13,9 +13,14 @@
   <!-- 상단 헤더 -->
   <header id="header">
     <h1>🏢 MAGI Pixel Office</h1>
-    <div id="connection-status">
-      <span id="status-dot"></span>
-      <span id="status-text">연결 중...</span>
+    <div class="header-right">
+      <button class="header-btn" id="btn-notify" title="알림 켜기/끄기">🔔</button>
+      <button class="header-btn active" id="btn-sound" title="사운드 켜기/끄기">🔊</button>
+      <button class="header-btn" id="btn-theme" title="라이트/다크 모드">🌙</button>
+      <div id="connection-status">
+        <span id="status-dot"></span>
+        <span id="status-text">연결 중...</span>
+      </div>
     </div>
   </header>
 
@@ -44,8 +49,34 @@
       <span id="timeline-count">0건</span>
     </div>
     <div id="timeline-list">
-      <!-- 이벤트는 app.js에서 동적 생성 -->
       <div id="timeline-empty">아직 이벤트가 없습니다</div>
+    </div>
+  </section>
+
+  <!-- 팀 채팅 -->
+  <section id="chat-container">
+    <div id="chat-header">
+      <span>💬 팀 채팅</span>
+    </div>
+    <div id="chat-messages">
+      <div id="chat-empty">아직 메시지가 없습니다</div>
+    </div>
+    <div id="chat-input-area">
+      <select id="chat-sender-select">
+        <option value="junsu">준수</option>
+        <option value="byeol">별이</option>
+        <option value="mitsuri">미츠리</option>
+        <option value="sony">소니</option>
+        <option value="asuka">아스카</option>
+        <option value="kai">카이</option>
+        <option value="jet">제트</option>
+        <option value="boomerang">부메랑</option>
+        <option value="release">릴리스</option>
+        <option value="shinji">신지</option>
+        <option value="rei">레이</option>
+      </select>
+      <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." maxlength="200">
+      <button id="chat-send-btn">전송</button>
     </div>
   </section>
 
