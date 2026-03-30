@@ -8,11 +8,15 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   font-family: 'Noto Sans KR', sans-serif;
   background: #0d0d1a;
   color: #e0e0e0;
-  overflow-x: hidden;
+  overflow-y: auto;
   min-height: 100vh;
 }
 
@@ -75,8 +79,9 @@ body {
 #office-container {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   padding: 16px;
+  overflow: hidden;
 }
 
 #office {
@@ -504,6 +509,7 @@ body {
   #office {
     transform: scale(0.75);
     transform-origin: top center;
+    margin-bottom: -180px;
   }
 
   #office-container {
