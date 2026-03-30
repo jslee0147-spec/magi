@@ -532,7 +532,10 @@
 
     var avatar = document.getElementById('avatar-' + id);
     if (avatar) {
+      // has-sprite 클래스 보존 (스프라이트 아바타 유지)
+      var hadSprite = avatar.classList.contains('has-sprite');
       avatar.className = 'character-avatar';
+      if (hadSprite) avatar.classList.add('has-sprite');
       avatar.classList.add('status-' + status);
       if (mood !== 'idle') avatar.classList.add('mood-' + mood);
     }

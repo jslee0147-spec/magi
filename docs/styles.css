@@ -410,7 +410,8 @@ body {
 
 /* 사무실 배경 이미지 */
 #office.has-bg {
-  background-image: none !important;
+  background-size: cover;
+  background-position: center;
 }
 
 /* ===== PnL 요약 패널 ===== */
