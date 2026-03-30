@@ -41,11 +41,13 @@
       await firebase.auth().signInAnonymously();
 
       setupConnectionMonitor(db);
+      generateOfficeBackground();
       renderOffice();
       if (isMobile) renderMobileGrid();
       setupFirebaseListeners();
       setupEventListeners();
       setupChatListeners();
+      setupPnlListener(db);
       setupVisibilityHandler();
 
       window.addEventListener('resize', handleResize);
@@ -332,6 +334,21 @@
   }
 
   // ══════════════════════════════════════
+  // 사무실 배경 생성 (Canvas)
+  // ══════════════════════════════════════
+  function generateOfficeBackground() {
+    try {
+      var bgDataUrl = SpriteGenerator.generateBackground();
+      var office = document.getElementById('office');
+      office.style.backgroundImage = 'url(' + bgDataUrl + ')';
+      office.style.backgroundSize = 'cover';
+      office.classList.add('has-bg');
+    } catch (e) {
+      console.warn('배경 생성 실패, 기본 배경 유지:', e);
+    }
+  }
+
+  // ══════════════════════════════════════
   // 사무실 렌더링
   // ══════════════════════════════════════
   function renderOffice() {
@@ -354,9 +371,24 @@
       var avatar = document.createElement('div');
       avatar.className = 'character-avatar status-idle';
       avatar.id = 'avatar-' + char.id;
-      avatar.style.background = 'radial-gradient(circle at 35% 35%, ' +
-        lightenColor(char.color, 30) + ', ' + char.color + ')';
-      avatar.textContent = char.name[0];
+
+      // Phase 5: Canvas 스프라이트 시도, 실패 시 컬러 원 폴백
+      try {
+        var spriteUrl = SpriteGenerator.generateCharacter(char.id);
+        if (spriteUrl) {
+          var img = document.createElement('img');
+          img.src = spriteUrl;
+          img.alt = char.name;
+          avatar.appendChild(img);
+          avatar.classList.add('has-sprite');
+        } else {
+          throw new Error('no sprite');
+        }
+      } catch (e) {
+        avatar.style.background = 'radial-gradient(circle at 35% 35%, ' +
+          lightenColor(char.color, 30) + ', ' + char.color + ')';
+        avatar.textContent = char.name[0];
+      }
       wrapper.appendChild(avatar);
 
       var name = document.createElement('div');
@@ -630,6 +662,47 @@
     g = Math.min(255, Math.floor(g + (255 - g) * percent / 100));
     b = Math.min(255, Math.floor(b + (255 - b) * percent / 100));
     return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+
+  // ══════════════════════════════════════
+  // PnL 요약 패널
+  // ══════════════════════════════════════
+  function setupPnlListener(db) {
+    var today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    document.getElementById('pnl-date').textContent = today;
+
+    var pnlRef = db.ref('team_magi_pnl/' + today);
+    pnlRef.on('value', function (snap) {
+      var data = snap.val();
+      if (!data) return;
+      updatePnlPanel(data);
+    });
+  }
+
+  function updatePnlPanel(data) {
+    var totalPnl = 0;
+    var strategies = ['kai', 'jet', 'boomerang', 'release'];
+
+    strategies.forEach(function (strat) {
+      var sd = data[strat] || {};
+      var pnl = sd.pnl || 0;
+      var trades = sd.trades || 0;
+      totalPnl += pnl;
+
+      var valEl = document.querySelector('#pnl-' + strat + ' .pnl-val');
+      var detailEl = document.querySelector('#pnl-' + strat + ' .pnl-detail');
+      if (valEl) {
+        valEl.textContent = '$' + pnl.toFixed(2);
+        valEl.className = 'pnl-val ' + (pnl >= 0 ? 'positive' : 'negative');
+      }
+      if (detailEl) {
+        detailEl.textContent = trades + '건';
+      }
+    });
+
+    var totalEl = document.getElementById('pnl-total-value');
+    totalEl.textContent = (totalPnl >= 0 ? '+' : '') + '$' + totalPnl.toFixed(2);
+    totalEl.className = totalPnl >= 0 ? 'positive' : 'negative';
   }
 
   // ══════════════════════════════════════

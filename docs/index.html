@@ -32,15 +32,30 @@
   <!-- 사무실 메인 영역 -->
   <main id="office-container">
     <div id="office">
-      <!-- 가구 장식 -->
-      <div class="furniture" id="server-rack" style="left: 560px; top: 120px;">🖥️ 서버랙</div>
-      <div class="furniture" id="coffee-machine" style="left: 440px; top: 600px;">☕ 커피머신</div>
-      <div class="furniture" id="whiteboard" style="left: 700px; top: 600px;">📋 화이트보드</div>
-      <div class="furniture" id="magi-logo" style="left: 580px; top: 40px;">⚡ MAGI</div>
-
+      <!-- 배경은 sprite-generator.js가 Canvas로 생성 -->
       <!-- 캐릭터들은 app.js에서 동적으로 생성 -->
     </div>
   </main>
+
+  <!-- PnL 요약 패널 -->
+  <section id="pnl-container">
+    <div id="pnl-header">
+      <span>💰 오늘의 수익</span>
+      <span id="pnl-date"></span>
+    </div>
+    <div id="pnl-content">
+      <div id="pnl-total">
+        <span id="pnl-total-label">총 수익</span>
+        <span id="pnl-total-value">$0.00</span>
+      </div>
+      <div id="pnl-strategies">
+        <div class="pnl-strat" id="pnl-kai"><span class="pnl-icon">🌊</span><span class="pnl-name">카이</span><span class="pnl-val">$0</span><span class="pnl-detail">0건</span></div>
+        <div class="pnl-strat" id="pnl-jet"><span class="pnl-icon">⚡</span><span class="pnl-name">제트</span><span class="pnl-val">$0</span><span class="pnl-detail">0건</span></div>
+        <div class="pnl-strat" id="pnl-boomerang"><span class="pnl-icon">🪃</span><span class="pnl-name">부메랑</span><span class="pnl-val">$0</span><span class="pnl-detail">0건</span></div>
+        <div class="pnl-strat" id="pnl-release"><span class="pnl-icon">👁️</span><span class="pnl-name">릴리스</span><span class="pnl-val">$0</span><span class="pnl-detail">0건</span></div>
+      </div>
+    </div>
+  </section>
 
   <!-- 이벤트 타임라인 -->
   <section id="timeline-container">
@@ -100,6 +115,7 @@
 
   <!-- 앱 스크립트 -->
   <script src="firebase-config.js"></script>
+  <script src="sprite-generator.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

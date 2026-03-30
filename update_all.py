@@ -29,6 +29,8 @@ from urllib.parse import urlencode
 from urllib.error import URLError, HTTPError
 # 같은 디렉토리의 공통 모듈
 import magi_common as mc
+# 픽셀 오피스 Firebase 연동
+import firebase_writer as fw
 # ──────────────────────────────────────────────
 # 상수
 # ──────────────────────────────────────────────
@@ -1748,6 +1750,80 @@ def _dd_atomic_write(filepath, data):
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     tmp.replace(filepath)
 
+# ══════════════════════════════════════════════
+# 픽셀 오피스 상태 매핑
+# ══════════════════════════════════════════════
+def build_pixel_office_status(account_data):
+    """하트비트 + 포지션 + 계좌 데이터를 픽셀 오피스 상태로 매핑"""
+    status_map = {}
+    for strat in STRATEGY_ORDER:
+        sd = account_data.get(strat, {})
+        positions = sd.get("positions", [])
+        balance = sd.get("balance", 0)
+
+        # 하트비트로 alive 여부 판단
+        hb_path = BASE_DIR / f"heartbeat_{strat}.json"
+        alive = False
+        try:
+            if hb_path.exists():
+                with open(hb_path, "r") as f:
+                    hb = json.load(f)
+                elapsed = time.time() - hb.get("epoch", 0)
+                alive = elapsed < 1200  # 20분 이내면 살아있음
+        except Exception:
+            pass
+
+        if not alive:
+            status_map[strat] = {
+                "status": "offline",
+                "mood": "idle",
+                "task": ""
+            }
+        elif positions:
+            # 포지션 보유 중 → 모니터링
+            coins = [p.get("symbol", "?").replace("USDT", "") for p in positions]
+            total_pnl = sum(float(p.get("unrealisedPnl", 0)) for p in positions)
+            pnl_str = f"+${total_pnl:.1f}" if total_pnl >= 0 else f"-${abs(total_pnl):.1f}"
+            status_map[strat] = {
+                "status": "active",
+                "mood": "monitoring",
+                "task": f"📊 {', '.join(coins[:3])} ({pnl_str})"
+            }
+        else:
+            # 포지션 없음 → 스캔 대기
+            status_map[strat] = {
+                "status": "active",
+                "mood": "analyzing",
+                "task": f"🔍 스캔 대기 (잔고 ${balance:.0f})"
+            }
+
+    # 별이: update_all 실행 중이면 active
+    status_map["byeol"] = {
+        "status": "active",
+        "mood": "analyzing",
+        "task": "📊 대시보드 업데이트 중"
+    }
+
+    return status_map
+
+def build_pnl_summary(account_data):
+    """closed-pnl 데이터에서 오늘의 PnL 요약 생성"""
+    pnl_data = {}
+    for strat in STRATEGY_ORDER:
+        sd = account_data.get(strat, {})
+        closed_list = sd.get("closed_pnl", [])
+        total_pnl = 0.0
+        trade_count = 0
+        for cp in closed_list:
+            pnl = float(cp.get("closedPnl", 0))
+            total_pnl += pnl
+            trade_count += 1
+        pnl_data[strat] = {
+            "pnl": round(total_pnl, 2),
+            "trades": trade_count
+        }
+    return pnl_data
+
 def main():
     start_time = time.time()
     logger.info("=" * 50)
@@ -1755,6 +1831,8 @@ def main():
     try:
         # 설정 로드
         config = mc.load_config()
+        # 픽셀 오피스 Firebase 초기화
+        fw.init_firebase(config)
         notion_cfg = config.get("notion", {})
         if not notion_cfg.get("token"):
             logger.error("Notion 토큰이 config.json에 없습니다!")
@@ -1789,6 +1867,19 @@ def main():
             return
         # 6. 대시보드 업데이트 (원자적: 같은 데이터로)
         update_dashboard(config, blocks, data)
+        # 6.5. 픽셀 오피스 Firebase 상태 업데이트
+        try:
+            pixel_status = build_pixel_office_status(account_data)
+            fw.update_all_status(pixel_status)
+            logger.info("🔥 픽셀 오피스 상태 업데이트 완료")
+            # PnL 요약도 push
+            pnl_data = build_pnl_summary(account_data)
+            if pnl_data:
+                today = datetime.now(KST).strftime("%Y-%m-%d")
+                fw.update_pnl(today, pnl_data)
+                logger.info("🔥 PnL 요약 업데이트 완료")
+        except Exception as e:
+            logger.warning(f"🔥 픽셀 오피스 업데이트 실패 (트레이딩 무영향): {e}")
         # 7. 거래 로그 동기화 (같은 데이터로 — 원자적)
         sync_trade_logs(config, account_data, trade_events)
         # 8. 열린 포지션 → '진행중' 레코드 동기화

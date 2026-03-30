@@ -395,6 +395,112 @@ body {
 .character-avatar.mood-reviewing { animation: pulse-active 1.5s ease-in-out infinite; }
 .character-avatar.mood-monitoring { animation: pulse-idle 2s ease-in-out infinite; }
 
+/* ===== 스프라이트 아바타 (Phase 5) ===== */
+.character-avatar img {
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+  border-radius: 0;
+}
+
+.character-avatar.has-sprite {
+  border-radius: 4px;
+  background: transparent !important;
+}
+
+/* 사무실 배경 이미지 */
+#office.has-bg {
+  background-image: none !important;
+}
+
+/* ===== PnL 요약 패널 ===== */
+#pnl-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 16px 16px;
+}
+
+#pnl-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--bg-header);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+#pnl-date {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+#pnl-content {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 0 0 8px 8px;
+}
+
+#pnl-total {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 120px;
+}
+
+#pnl-total-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+#pnl-total-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+#pnl-total-value.positive { color: #32CD32; }
+#pnl-total-value.negative { color: #FF6347; }
+
+#pnl-strategies {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  justify-content: space-around;
+}
+
+.pnl-strat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.pnl-icon { font-size: 16px; }
+.pnl-name { color: var(--text-muted); font-size: 11px; }
+
+.pnl-val {
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.pnl-val.positive { color: #32CD32; }
+.pnl-val.negative { color: #FF6347; }
+
+.pnl-detail {
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
 /* ===== 이벤트 타임라인 ===== */
 #timeline-container {
   max-width: 1280px;
@@ -711,7 +817,10 @@ body {
     margin-right: 4px;
   }
 
-  #timeline-container, #chat-container { padding: 0 8px 8px; }
+  #timeline-container, #chat-container, #pnl-container { padding: 0 8px 8px; }
+
+  #pnl-content { flex-direction: column; gap: 8px; }
+  #pnl-strategies { flex-wrap: wrap; gap: 8px; }
   #timeline-list { height: 140px; }
   #chat-messages { height: 120px; }
 }
