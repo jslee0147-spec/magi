@@ -173,12 +173,15 @@ class BinanceClient:
 
     def set_margin_type(self, symbol, margin_type="CROSSED"):
         """마진 타입 설정 (CROSSED/ISOLATED)"""
-        try:
-            return self._request("POST", "/fapi/v1/marginType", {
-                "symbol": symbol, "marginType": margin_type
-            }, signed=True)
-        except:
-            pass  # 이미 설정되어 있으면 에러 → 무시
+        result = self._request("POST", "/fapi/v1/marginType", {
+            "symbol": symbol, "marginType": margin_type
+        }, signed=True)
+        # -4046 "No need to change margin type" 에러는 정상 (이미 설정됨)
+        if result and result.get("code") == -4046:
+            return result
+        if result and result.get("code") and result["code"] != 200:
+            self.logger.warning(f"마진 타입 설정 실패: {symbol} → {result}")
+        return result
 
     def place_market_order(self, symbol, side, quantity):
         """시장가 주문"""
@@ -357,8 +360,8 @@ def calc_volume_ratio(df, period=6):
 # ──────────────────────────────────────────────
 # 시그널 스코어
 # ──────────────────────────────────────────────
-def calc_signal_score(rsi, volume_ratio, daily_aligned, side="long"):
-    """종목 우선순위 스코어"""
+def calc_signal_score(rsi, volume_ratio, ema_distance_pct, side="long"):
+    """종목 우선순위 스코어 (v1.2: EMA 거리 기반 1D 추세 점수)"""
     # RSI 강도
     if side == "long":
         if rsi >= 70: rsi_score = 1.0
@@ -377,8 +380,10 @@ def calc_signal_score(rsi, volume_ratio, daily_aligned, side="long"):
     elif volume_ratio >= 1.0: vol_score = 0.4
     else: vol_score = 0.0
 
-    # 1D 추세
-    trend_score = 1.0 if daily_aligned else 0.0
+    # 1D 추세 — EMA 거리(%) 기반 3단계 (v1.2 설계서)
+    if ema_distance_pct >= 3.0: trend_score = 1.0
+    elif ema_distance_pct >= 1.5: trend_score = 0.7
+    else: trend_score = 0.4
 
     return (rsi_score * 0.4) + (vol_score * 0.3) + (trend_score * 0.3)
 

@@ -113,7 +113,11 @@ def scan_and_trade(config, client, state, params, symbols):
         pos = state["positions"][symbol]
         try:
             # 서버 Stop 주문 먼저 취소 (중복 청산 방지)
-            client.cancel_all_orders(symbol)
+            cancel_result = client.cancel_all_orders(symbol)
+            if not cancel_result:
+                logger.warning(f"  {symbol} 주문 취소 실패 — 청산 스킵, 다음 스캔에서 재시도")
+                send_telegram(config, f"⚠️ 히노카미 {symbol} 주문 취소 실패 — 수동 확인 필요")
+                continue
 
             qty = abs(float(pos["quantity"]))
             result = client.close_position(symbol, "BUY", qty)
@@ -196,10 +200,10 @@ def scan_and_trade(config, client, state, params, symbols):
         return state
 
     # 일일/주간 한도
-    if abs(state["daily_pnl"]) >= equity * params["DAILY_MAX_LOSS"]:
+    if state["daily_pnl"] <= -(equity * params["DAILY_MAX_LOSS"]):
         logger.warning(f"  ⚠️ 일일 한도 도달 (${state['daily_pnl']:.2f})")
         return state
-    if abs(state["weekly_pnl"]) >= equity * params["WEEKLY_MAX_LOSS"]:
+    if state["weekly_pnl"] <= -(equity * params["WEEKLY_MAX_LOSS"]):
         logger.warning(f"  ⚠️ 주간 한도 도달 (${state['weekly_pnl']:.2f})")
         return state
 
@@ -254,8 +258,9 @@ def scan_and_trade(config, client, state, params, symbols):
             if df_1d["close"].iloc[-1] <= ema_1d:
                 continue  # 1D 종가가 EMA 아래면 롱 불가
 
-            # 시그널 스코어
-            score = calc_signal_score(current["rsi"], current["vol_ratio"], True, "long")
+            # 시그널 스코어 (EMA 거리 기반)
+            ema_dist = abs(df_1d["close"].iloc[-1] - ema_1d) / ema_1d * 100
+            score = calc_signal_score(current["rsi"], current["vol_ratio"], ema_dist, "long")
             if score < params["MIN_SIGNAL_SCORE"]:
                 continue
 
