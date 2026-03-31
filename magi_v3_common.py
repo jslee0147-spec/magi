@@ -519,6 +519,64 @@ def write_heartbeat(engine_name):
         json.dump(data, f)
 
 
+def write_scan_log(engine_name, scan_data):
+    """스캔 퍼널 로그 기록 (JSONL)"""
+    log_dir = BASE_DIR / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / f"{engine_name}_scan_log.jsonl"
+    try:
+        with open(log_path, "a") as f:
+            f.write(json.dumps(scan_data, default=str) + "\n")
+            f.flush()
+    except IOError as e:
+        logging.getLogger(engine_name).error(f"스캔 로그 기록 실패: {e}")
+
+
+def get_daily_scan_summary(engine_name, target_date=None):
+    """특정 날짜의 스캔 로그 집계 (일일 요약용)"""
+    if target_date is None:
+        target_date = (datetime.now(timezone.utc) - timedelta(days=1)).date().isoformat()
+
+    log_path = BASE_DIR / "logs" / f"{engine_name}_scan_log.jsonl"
+    if not log_path.exists():
+        return None
+
+    scans = []
+    with open(log_path, "r") as f:
+        for line in f:
+            try:
+                entry = json.loads(line.strip())
+                if entry.get("scan_time", "")[:10] == target_date:
+                    scans.append(entry)
+            except:
+                continue
+
+    if not scans:
+        return None
+
+    total_st = sum(s["funnel"]["st_signal"] for s in scans)
+    total_rsi = sum(s["funnel"]["rsi_pass"] for s in scans)
+    total_entered = sum(s["funnel"]["entered"] for s in scans)
+    total_api_err = sum(s.get("api_errors", 0) for s in scans)
+
+    best_miss = None
+    for s in scans:
+        for nm in s.get("near_miss", []):
+            if best_miss is None or nm.get("gap_pct", 999) < best_miss.get("gap_pct", 999):
+                best_miss = nm
+
+    return {
+        "date": target_date,
+        "engine": engine_name,
+        "total_scans": len(scans),
+        "total_st_signals": total_st,
+        "total_rsi_pass": total_rsi,
+        "total_entered": total_entered,
+        "total_api_errors": total_api_err,
+        "best_near_miss": best_miss,
+    }
+
+
 def load_state(engine_name):
     """엔진 상태 파일 로드"""
     state_path = BASE_DIR / f"state_{engine_name}.json"

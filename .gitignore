@@ -7,3 +7,4 @@ heartbeat_*.json
 *.bak_*
 bt_data/
 config_v3.json
+watchdog_alert_state.json

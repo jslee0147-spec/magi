@@ -18,7 +18,7 @@ from magi_v3_common import (
     load_config, create_logger, BinanceClient, send_telegram,
     calc_supertrend, calc_rsi, calc_ema, calc_volume_ratio, calc_atr,
     calc_signal_score, calc_position_size, get_top_symbols,
-    write_heartbeat, load_state, save_state,
+    write_heartbeat, load_state, save_state, write_scan_log,
     notion_create_trade_log, notion_update_trade_log,
     KST, BASE_DIR
 )
@@ -37,6 +37,25 @@ def scan_and_trade(config, client, state, params, symbols):
         return state
 
     logger.info(f"━━ 스캔 시작 | Equity: ${equity:.2f} | 포지션: {len(state['positions'])}개 ━━")
+
+    # ── 스캔 퍼널 카운터 ──
+    scan_log = {
+        "scan_time": now.isoformat(),
+        "engine": "hinokami",
+        "equity": equity,
+        "symbol_pool": len(symbols),
+        "scanned_ok": 0,
+        "kline_failed": 0,
+        "funnel": {
+            "st_signal": 0, "rsi_pass": 0, "volume_pass": 0,
+            "atr_pass": 0, "ema_pass": 0, "score_pass": 0,
+            "slot_available": 0, "entered": 0,
+        },
+        "near_miss": [],
+        "positions": len(state["positions"]),
+        "cooldown": bool(state.get("cooldown_until")),
+        "api_errors": 0,
+    }
 
     # ── 일일/주간 PnL 리셋 ──
     today = now.date().isoformat()
@@ -215,17 +234,20 @@ def scan_and_trade(config, client, state, params, symbols):
         logger.info(f"  슬롯 없음 ({len(state['positions'])}/{params['MAX_POSITIONS']})")
         return state
 
+    scan_log["funnel"]["slot_available"] = available
+
     candidates = []
     for symbol in symbols:
         if symbol in state["positions"]:
             continue
         try:
-            # 4H 캔들
             df = client.get_klines(symbol, "4h", limit=100)
             if len(df) < 50:
+                scan_log["kline_failed"] += 1
                 continue
 
-            # 지표 계산
+            scan_log["scanned_ok"] += 1
+
             st, st_dir, atr = calc_supertrend(df, params["ATR_PERIOD"], params["ATR_MULTIPLIER"])
             df["rsi"] = calc_rsi(df, params["RSI_PERIOD"])
             df["vol_ratio"] = calc_volume_ratio(df, params["VOLUME_RATIO_PERIOD"])
@@ -233,22 +255,29 @@ def scan_and_trade(config, client, state, params, symbols):
             current = df.iloc[-1]
             prev_dir = st_dir.iloc[-2] if len(st_dir) > 1 else 0
 
-            # SuperTrend 롱 전환 체크
+            # SuperTrend 롱 전환
             if not (st_dir.iloc[-1] == 1 and prev_dir == -1):
                 continue
+            scan_log["funnel"]["st_signal"] += 1
 
             # RSI > 55
             if current["rsi"] <= params["RSI_THRESHOLD"]:
+                gap = abs(current["rsi"] - params["RSI_THRESHOLD"]) / params["RSI_THRESHOLD"] * 100
+                if gap <= 10:
+                    scan_log["near_miss"].append({"symbol": symbol, "failed_at": "rsi", "value": round(current["rsi"], 1), "threshold": params["RSI_THRESHOLD"], "gap_pct": round(gap, 1)})
                 continue
+            scan_log["funnel"]["rsi_pass"] += 1
 
             # 거래량 필터
             if params["VOLUME_FILTER"] and current["vol_ratio"] < 1.0:
                 continue
+            scan_log["funnel"]["volume_pass"] += 1
 
             # ATR 과다 필터
             atr_20_avg = atr.iloc[-21:-1].mean()
             if atr.iloc[-1] > atr_20_avg * 2.0:
                 continue
+            scan_log["funnel"]["atr_pass"] += 1
 
             # 1D EMA 필터
             df_1d = client.get_klines(symbol, "1d", limit=60)
@@ -256,13 +285,21 @@ def scan_and_trade(config, client, state, params, symbols):
                 continue
             ema_1d = calc_ema(df_1d["close"], params["EMA_PERIOD_1D"]).iloc[-1]
             if df_1d["close"].iloc[-1] <= ema_1d:
-                continue  # 1D 종가가 EMA 아래면 롱 불가
+                dist = abs(df_1d["close"].iloc[-1] - ema_1d) / ema_1d * 100
+                if dist <= 2.0:
+                    scan_log["near_miss"].append({"symbol": symbol, "failed_at": "ema", "value": round(df_1d["close"].iloc[-1], 2), "threshold": round(ema_1d, 2), "gap_pct": round(dist, 1)})
+                continue
+            scan_log["funnel"]["ema_pass"] += 1
 
             # 시그널 스코어 (EMA 거리 기반)
             ema_dist = abs(df_1d["close"].iloc[-1] - ema_1d) / ema_1d * 100
             score = calc_signal_score(current["rsi"], current["vol_ratio"], ema_dist, "long")
             if score < params["MIN_SIGNAL_SCORE"]:
+                gap = abs(score - params["MIN_SIGNAL_SCORE"]) / params["MIN_SIGNAL_SCORE"] * 100
+                if gap <= 10:
+                    scan_log["near_miss"].append({"symbol": symbol, "failed_at": "score", "value": round(score, 2), "threshold": params["MIN_SIGNAL_SCORE"], "gap_pct": round(gap, 1)})
                 continue
+            scan_log["funnel"]["score_pass"] += 1
 
             candidates.append({
                 "symbol": symbol,
@@ -274,6 +311,7 @@ def scan_and_trade(config, client, state, params, symbols):
             })
 
         except Exception as e:
+            scan_log["api_errors"] += 1
             logger.warning(f"  {symbol} 스캔 에러: {e}")
             continue
 
@@ -313,6 +351,10 @@ def scan_and_trade(config, client, state, params, symbols):
             # 서버 Stop Market 설정 (봉 사이 급락 안전망)
             stop_result = client.place_stop_market(symbol, "SELL", hard_stop, qty)
             stop_order_id = stop_result.get("orderId") if stop_result else None
+            if not stop_result:
+                send_telegram(config, f"⚠️ 히노카미 {symbol} Stop Market 설정 실패 — 서버 보호 없음!")
+
+            scan_log["funnel"]["entered"] += 1
 
             # 상태 저장
             state["positions"][symbol] = {
@@ -360,6 +402,11 @@ def scan_and_trade(config, client, state, params, symbols):
 
         except Exception as e:
             logger.error(f"  ❌ {symbol} 진입 실패: {e}")
+
+    # 스캔 퍼널 로그 기록
+    scan_log["positions"] = len(state["positions"])
+    write_scan_log("hinokami", scan_log)
+    logger.info(f"  [퍼널] ST:{scan_log['funnel']['st_signal']} → RSI:{scan_log['funnel']['rsi_pass']} → Vol:{scan_log['funnel']['volume_pass']} → ATR:{scan_log['funnel']['atr_pass']} → EMA:{scan_log['funnel']['ema_pass']} → Score:{scan_log['funnel']['score_pass']} → 진입:{scan_log['funnel']['entered']}")
 
     return state
 

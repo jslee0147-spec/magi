@@ -19,7 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from magi_v3_common import (
     load_config, create_logger, BinanceClient, send_telegram,
-    notion_request, load_state, write_heartbeat,
+    notion_request, load_state, write_heartbeat, get_daily_scan_summary,
     calc_ema, KST, BASE_DIR
 )
 
@@ -123,18 +123,45 @@ def build_dashboard_blocks(config, hinokami_state, nite_state, btc_info):
             {"type": "text", "text": {"content": f"  📉 {sym} 숏 | 진입: ${entry:.2f} | SL: ${sl:.2f} | {pos.get('entry_time', '')[:16]}"}}
         ]}})
 
-    # 나이트 하트비트
-    hb_path = BASE_DIR / "logs" / "nite_heartbeat.jsonl"
-    if hb_path.exists():
-        try:
-            lines = hb_path.read_text().strip().split("\n")
-            if lines:
-                last_hb = json.loads(lines[-1])
-                blocks.append({"type": "paragraph", "paragraph": {"rich_text": [
-                    {"type": "text", "text": {"content": f"  💓 하트비트 | ST숏신호: {last_hb.get('st_short_signals',0)} | 필터통과: {last_hb.get('filter_passed',0)} | 진입: {last_hb.get('entries',0)}"}}
-                ]}})
-        except:
-            pass
+    # ━━━ 엔진 건강 섹션 ━━━
+    blocks.append({"type": "paragraph", "paragraph": {"rich_text": [
+        {"type": "text", "text": {"content": "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"}}
+    ]}})
+
+    for eng_name, eng_label, interval_min in [("hinokami", "🔥 히노카미", 240), ("nite", "🌙 나이트", 120)]:
+        hb_path = BASE_DIR / f"heartbeat_{eng_name}.json"
+        if hb_path.exists():
+            hb = json.loads(hb_path.read_text())
+            last_dt = datetime.fromisoformat(hb["timestamp"])
+            elapsed = (datetime.now(KST) - last_dt).total_seconds() / 60
+            if elapsed <= interval_min * 1.5:
+                status = "🟢 정상"
+            elif elapsed <= interval_min * 2.5:
+                status = "🟡 주의"
+            else:
+                status = "🔴 장애"
+            elapsed_str = f"{int(elapsed)}분 전"
+        else:
+            status = "🔴 장애"
+            elapsed_str = "heartbeat 없음"
+
+        summary = get_daily_scan_summary(eng_name)
+        if summary:
+            scan_str = f"{summary['total_scans']}스캔 | ST:{summary['total_st_signals']} → RSI:{summary['total_rsi_pass']} → 진입:{summary['total_entered']}"
+            miss_str = ""
+            if summary.get("best_near_miss"):
+                nm = summary["best_near_miss"]
+                miss_str = f" | Near-miss: {nm['symbol']} ({nm['failed_at']} {nm['value']}/{nm['threshold']})"
+        else:
+            scan_str = "데이터 없음"
+            miss_str = ""
+
+        blocks.append({"type": "paragraph", "paragraph": {"rich_text": [
+            {"type": "text", "text": {"content": f"{eng_label}: {status} | 마지막 스캔: {elapsed_str}"}}
+        ]}})
+        blocks.append({"type": "paragraph", "paragraph": {"rich_text": [
+            {"type": "text", "text": {"content": f"  어제: {scan_str}{miss_str}"}}
+        ]}})
 
     return blocks
 
@@ -161,8 +188,43 @@ def update_notion_dashboard(config, blocks):
     return True
 
 
+def send_daily_summary(config):
+    """일일 요약 텔레그램 발송"""
+    yesterday = (datetime.now(timezone.utc) - timedelta(days=1)).date().isoformat()
+    lines = [f"📊 <b>MAGI v3.0 일일 요약</b> ({yesterday})\n"]
+
+    for eng_name, eng_label in [("hinokami", "🔥 히노카미 (롱)"), ("nite", "🌙 나이트 (숏)")]:
+        summary = get_daily_scan_summary(eng_name, yesterday)
+        if summary:
+            lines.append(f"{eng_label}")
+            lines.append(f"  스캔: {summary['total_scans']}회 ✅")
+            lines.append(f"  ST전환: {summary['total_st_signals']} | RSI통과: {summary['total_rsi_pass']} | 진입: {summary['total_entered']}")
+            if summary.get("best_near_miss"):
+                nm = summary["best_near_miss"]
+                lines.append(f"  Near-miss: {nm['symbol']} ({nm['failed_at']} {nm['value']}/{nm['threshold']})")
+            else:
+                lines.append(f"  Near-miss: 없음")
+            if summary["total_api_errors"] > 0:
+                lines.append(f"  ⚠️ API 오류: {summary['total_api_errors']}건")
+            lines.append("")
+        else:
+            lines.append(f"{eng_label}")
+            lines.append(f"  ❌ 스캔 데이터 없음!\n")
+
+    all_ok = all((BASE_DIR / f"heartbeat_{e}.json").exists() for e in ["hinokami", "nite"])
+    lines.append(f"시스템: {'🟢 정상' if all_ok else '🔴 점검 필요'}")
+    send_telegram(config, "\n".join(lines))
+    logger.info("📊 일일 요약 텔레그램 발송 완료")
+
+
 def main():
     config = load_config()
+    now_kst = datetime.now(KST)
+
+    # 매일 09:00~09:04 KST 사이에 일일 요약 전송
+    if now_kst.hour == 9 and now_kst.minute < 5:
+        send_daily_summary(config)
+
     logger.info("📋 현황판 업데이트 시작")
 
     try:
