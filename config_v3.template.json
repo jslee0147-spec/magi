@@ -1,0 +1,90 @@
+{
+  "telegram": {
+    "bot_token": "YOUR_BOT_TOKEN",
+    "chat_id": "YOUR_CHAT_ID"
+  },
+  "notion": {
+    "token": "YOUR_NOTION_TOKEN",
+    "trade_log_db": "a2f9bf51170e4060997df6d69ff8a366",
+    "dashboard_page_id": "33416ce4-4537-8183-ba5d-c18fb5473f50"
+  },
+  "engines": {
+    "hinokami": {
+      "name": "\ud788\ub178\uce74\ubbf8",
+      "icon": "\ud83d\udd25",
+      "side": "long",
+      "timeframe": "4h",
+      "scan_offset_sec": 0,
+      "api_key": "YOUR_API_KEY",
+      "api_secret": "YOUR_API_SECRET",
+      "params": {
+        "ATR_PERIOD": 10,
+        "ATR_MULTIPLIER": 3.0,
+        "TRAILING_ATR_MULTIPLE": 2.0,
+        "RSI_PERIOD": 14,
+        "RSI_THRESHOLD": 55,
+        "VOLUME_FILTER": true,
+        "EMA_PERIOD_1D": 50,
+        "BE_TRIGGER_ATR_MULT": 1.0,
+        "HARD_STOP_ATR_MULT": 2.0,
+        "MAX_POSITIONS": 3,
+        "LEVERAGE": 5,
+        "MAX_LOSS_TRADE": 0.015,
+        "DAILY_MAX_LOSS": 0.05,
+        "WEEKLY_MAX_LOSS": 0.1,
+        "COOLDOWN_LOSSES": 3,
+        "MAX_HOLD_HOURS_LOSS": 72,
+        "PROFIT_THRESHOLD_TIME": 0.01,
+        "MIN_SIGNAL_SCORE": 0.6,
+        "MIN_POSITION_USD": 5.0,
+        "MAX_POSITION_PCT": 0.15,
+        "TAKER_FEE": 0.0005,
+        "SLIPPAGE": 0.0003,
+        "TOP_N_SYMBOLS": 30,
+        "VOLUME_RATIO_PERIOD": 6
+      }
+    },
+    "nite": {
+      "name": "\ub098\uc774\ud2b8",
+      "icon": "\ud83c\udf19",
+      "side": "short",
+      "timeframe": "2h",
+      "scan_offset_sec": 30,
+      "api_key": "YOUR_API_KEY",
+      "api_secret": "YOUR_API_SECRET",
+      "params": {
+        "ATR_PERIOD": 10,
+        "ATR_MULTIPLIER": 2.5,
+        "TRAILING_ATR_MULTIPLE": 1.0,
+        "RSI_PERIOD": 14,
+        "RSI_THRESHOLD": 45,
+        "VOLUME_FILTER": true,
+        "EMA_PERIOD_1D": 20,
+        "BE_TRIGGER_ATR_MULT": 0.5,
+        "HARD_STOP_ATR_MULT": 1.5,
+        "MAX_POSITIONS": 3,
+        "LEVERAGE": 5,
+        "MAX_LOSS_TRADE": 0.01,
+        "DAILY_MAX_LOSS": 0.03,
+        "WEEKLY_MAX_LOSS": 0.06,
+        "COOLDOWN_LOSSES": 2,
+        "MAX_HOLD_HOURS_LOSS": 48,
+        "PROFIT_THRESHOLD_TIME": 0.01,
+        "MIN_SIGNAL_SCORE": 0.6,
+        "MIN_POSITION_USD": 5.0,
+        "MAX_POSITION_PCT": 0.15,
+        "TAKER_FEE": 0.0005,
+        "SLIPPAGE": 0.0003,
+        "TOP_N_SYMBOLS": 50,
+        "VOLUME_RATIO_PERIOD": 12
+      }
+    }
+  },
+  "market_sensor": {
+    "update_interval_hours": 168,
+    "min_volume_24h": 10000000,
+    "exclude_spread_pct": 0.1,
+    "exclude_daily_range_pct": 30,
+    "min_listing_days": 90
+  }
+}

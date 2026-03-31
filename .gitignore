@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+logs/
+state_*.json
+heartbeat_*.json
+*.tmp
+*.bak_*
+bt_data/
+config_v3.json
