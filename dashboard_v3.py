@@ -222,7 +222,7 @@ def main():
     now_kst = datetime.now(KST)
 
     # 매일 09:00~09:04 KST 사이에 일일 요약 전송
-    if now_kst.hour == 9 and now_kst.minute < 5:
+    if now_kst.hour == 9 and now_kst.minute < 10:
         send_daily_summary(config)
 
     logger.info("📋 현황판 업데이트 시작")

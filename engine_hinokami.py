@@ -34,6 +34,7 @@ def scan_and_trade(config, client, state, params, symbols):
     equity = client.get_equity()
     if equity <= 0:
         logger.error("자본 조회 실패 또는 0")
+        write_scan_log("hinokami", {"scan_time": now.isoformat(), "engine": "hinokami", "error": "equity_zero", "equity": 0, "funnel": {"st_signal":0,"rsi_pass":0,"volume_pass":0,"atr_pass":0,"ema_pass":0,"score_pass":0,"slot_available":0,"entered":0}, "near_miss": [], "api_errors": 0})
         return state
 
     logger.info(f"━━ 스캔 시작 | Equity: ${equity:.2f} | 포지션: {len(state['positions'])}개 ━━")

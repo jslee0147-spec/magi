@@ -35,6 +35,7 @@ def scan_and_trade(config, client, state, params, symbols):
     equity = client.get_equity()
     if equity <= 0:
         logger.error("자본 조회 실패 또는 0")
+        write_scan_log("nite", {"scan_time": now.isoformat(), "engine": "nite", "error": "equity_zero", "equity": 0, "funnel": {"st_signal":0,"rsi_pass":0,"volume_pass":0,"atr_pass":0,"ema_pass":0,"score_pass":0,"slot_available":0,"entered":0}, "near_miss": [], "api_errors": 0})
         return state
 
     logger.info(f"━━ 스캔 시작 | Equity: ${equity:.2f} | 포지션: {len(state['positions'])}개 ━━")
@@ -317,7 +318,6 @@ def scan_and_trade(config, client, state, params, symbols):
 
     candidates.sort(key=lambda x: x["score"], reverse=True)
     logger.info(f"  후보: {len(candidates)}개 (슬롯: {available})")
-    logger.info(f"  [퍼널] ST:{scan_log['funnel']['st_signal']} → RSI:{scan_log['funnel']['rsi_pass']} → Vol:{scan_log['funnel']['volume_pass']} → ATR:{scan_log['funnel']['atr_pass']} → EMA:{scan_log['funnel']['ema_pass']} → Score:{scan_log['funnel']['score_pass']} → 진입:{scan_log['funnel']['entered']}")
 
     # ── 진입 실행 ──
     for cand in candidates[:available]:
@@ -397,6 +397,8 @@ def scan_and_trade(config, client, state, params, symbols):
 
         except Exception as e:
             logger.error(f"  ❌ {symbol} 진입 실패: {e}")
+
+    logger.info(f"  [퍼널] ST:{scan_log['funnel']['st_signal']} → RSI:{scan_log['funnel']['rsi_pass']} → Vol:{scan_log['funnel']['volume_pass']} → ATR:{scan_log['funnel']['atr_pass']} → EMA:{scan_log['funnel']['ema_pass']} → Score:{scan_log['funnel']['score_pass']} → 진입:{scan_log['funnel']['entered']}")
 
     # 스캔 퍼널 로그 기록
     scan_log["positions"] = len(state["positions"])
