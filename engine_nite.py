@@ -208,6 +208,8 @@ def scan_and_trade(config, client, state, params, symbols):
         cd = datetime.fromisoformat(state["cooldown_until"])
         if now < cd:
             logger.info(f"  쿨다운 중 ({cd.strftime('%m/%d %H:%M')}까지)")
+            scan_log["cooldown"] = True
+            write_scan_log("nite", scan_log)
             return state
         else:
             state["cooldown_until"] = None
@@ -217,13 +219,17 @@ def scan_and_trade(config, client, state, params, symbols):
         state["cooldown_until"] = next_day.isoformat()
         logger.warning(f"  ⚠️ {state['consecutive_losses']}연속 손절 → 쿨다운")
         send_telegram(config, f"🌙 나이트 쿨다운 발동\n{state['consecutive_losses']}회 연속 손절")
+        scan_log["cooldown"] = True
+        write_scan_log("nite", scan_log)
         return state
 
     if state["daily_pnl"] <= -(equity * params["DAILY_MAX_LOSS"]):
         logger.warning(f"  ⚠️ 일일 한도 (${state['daily_pnl']:.2f})")
+        write_scan_log("nite", scan_log)
         return state
     if state["weekly_pnl"] <= -(equity * params["WEEKLY_MAX_LOSS"]):
         logger.warning(f"  ⚠️ 주간 한도 (${state['weekly_pnl']:.2f})")
+        write_scan_log("nite", scan_log)
         return state
 
     # ══════════════════════════════════════
@@ -232,6 +238,7 @@ def scan_and_trade(config, client, state, params, symbols):
     available = params["MAX_POSITIONS"] - len(state["positions"])
     if available <= 0:
         logger.info(f"  슬롯 없음 ({len(state['positions'])}/{params['MAX_POSITIONS']})")
+        write_scan_log("nite", scan_log)
         return state
 
     scan_log["funnel"]["slot_available"] = available
@@ -305,6 +312,7 @@ def scan_and_trade(config, client, state, params, symbols):
             })
 
         except Exception as e:
+            scan_log["api_errors"] += 1
             logger.warning(f"  {symbol} 스캔 에러: {e}")
 
     candidates.sort(key=lambda x: x["score"], reverse=True)
